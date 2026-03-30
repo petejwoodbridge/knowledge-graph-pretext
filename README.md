@@ -1,61 +1,93 @@
 # Knowledge Graph Pretext
 
-An interactive knowledge graph of **240 Creative AI tools** extracted from the [DreamLab Newsletter](https://open.spotify.com/show/2ptbLwVWeyO7ooPGHoYTqk) Issues 1–20. Built with canvas-based spring physics rendering using [@chenglou/pretext](https://github.com/chenglou/pretext) for high-quality text layout.
+An interactive, physics-based knowledge graph visualiser built with canvas rendering and [@chenglou/pretext](https://github.com/chenglou/pretext) for high-quality text layout.
+
+**Upload any `.json`, `.md`, or `.zip` file to visualise your own knowledge graph.**
+
+The graph comes preloaded with 240 Creative AI tools from the [DreamLab Newsletter](https://open.spotify.com/show/2ptbLwVWeyO7ooPGHoYTqk) Issues 1–20 as an example — upload your own data to replace it entirely.
 
 **Live:** [petejwoodbridge.github.io/knowledge-graph-pretext](https://petejwoodbridge.github.io/knowledge-graph-pretext/)
+
+---
+
+## Uploading Your Own Graph
+
+Uploading a file **replaces** the current graph completely. Use the **Upload** button in the right panel or drag and drop a file anywhere onto the canvas.
+
+### JSON format
+```json
+{
+  "nodes": [
+    {
+      "id": "a",
+      "label": "My Tool",
+      "desc": "What this tool does",
+      "url": "https://example.com",
+      "category": "Video",
+      "tags": ["ai", "video"],
+      "issues": [1, 2]
+    }
+  ],
+  "edges": [
+    { "source": "a", "target": "b", "label": "relates to" }
+  ]
+}
+```
+
+Only `id` and `label` are required on each node. All other fields are optional.
+
+### Markdown format
+Headings map to categories and nodes — the tool will auto-generate edges between nodes in the same category and nodes sharing a URL domain:
+
+```markdown
+## Category Name
+
+### Tool Name
+**URL:** https://example.com
+**Issues:** #1, #2
+```
+
+### ZIP format
+Bundle multiple `.md` and/or `.json` files into a single `.zip`. All files are parsed and merged into one graph.
 
 ---
 
 ## Features
 
 ### Graph
-- **240 tools** across 10 categories, auto-connected by shared ecosystems (ComfyUI, Runway, Qwen, LTX, Google/Veo, Meta/SAM, etc.)
-- **Spring physics** layout — nodes repel each other and spring along edges until they settle
-- **10 colour-coded categories**: Video, Image, 3D & VFX, Audio, Agents, Coding, LLMs, Games, Design, Research
+- **Spring physics** layout — nodes repel each other and pull along edges until settled
+- **10 colour-coded categories** shown in the bottom-left legend
+- Nodes have a coloured accent bar indicating their category
 
 ### Filtering & Search
-- **Click any category** in the legend to group those nodes together at the centre of the screen
+- **Click any category** in the legend to cluster those nodes at the centre of the screen
 - **Search bar** (top centre) — type a query and press **Enter** to group matching tools
-  - Searches labels, descriptions, categories, tags, and newsletter issue numbers
+  - Searches labels, descriptions, categories, tags, and issue numbers
 - Matching nodes pull to the screen centre; non-matching nodes dim and push away
-- **Escape** or click the badge to clear the filter
-- Search also includes tool descriptions for richer results (e.g. search `lora`, `realtime`, `open source`)
+- **Escape** or click the active badge to clear the filter
 
 ### Node Details (right panel)
-- Click a node to see:
-  - Category badge
-  - Tool name
-  - Full description of what the tool does
-  - **Open Link ↗** button to visit the original source
-  - Newsletter issues it appeared in
-  - Tags
-  - Connected tools grouped by relationship type
-- **Double-click** a node to open its link directly
+Click a node to see:
+- Category, name, and full description
+- **Open Link ↗** button
+- Newsletter issues and tags
+- Connected nodes grouped by relationship type
+
+**Double-click** a node to open its link directly in a new tab.
 
 ### Navigation
 | Action | Result |
 |---|---|
-| Scroll | Zoom in/out |
+| Scroll | Zoom |
 | Drag canvas | Pan |
-| Drag node | Reposition (physics continues) |
-| Click node | Select & inspect in panel |
+| Drag node | Reposition |
+| Click node | Inspect in panel |
 | Double-click node | Open link |
 | Double-click canvas | Add new node |
 | Delete / Backspace | Remove selected node |
 
-### Pink Pixel Octopus
-There is a dancing pink pixel octopus on the graph. Drag it around — it dynamically repels nearby nodes and faces the direction you drag it.
-
-### File Import / Export
-The panel supports importing custom knowledge graphs:
-
-| Format | How it's parsed |
-|---|---|
-| `.json` | `{ nodes: [...], edges: [...] }` |
-| `.md` | `## Category` / `### Tool` / `**URL:**` / `**Issues:**` headings |
-| `.zip` | Any combination of `.md` and `.json` files bundled together |
-
-Export the current graph as JSON via the **Export Graph JSON** button.
+### The Octopus
+There is a dancing pink pixel octopus on the graph. Drag it — it repels nearby nodes and faces the direction you pull it.
 
 ---
 
@@ -66,21 +98,15 @@ npm install
 npm run dev
 ```
 
-Runs at `http://localhost:5173`
-
 ## Building
 
 ```bash
 npm run build
 ```
 
-Output goes to `dist/`. Deployed automatically to GitHub Pages via GitHub Actions on every push to `main`.
+Deployed automatically to GitHub Pages via GitHub Actions on every push to `master`.
 
 ---
-
-## Data Source
-
-All tools extracted from the **Dream Machine Newsletter** by [DreamLab](https://dreamlab.la/) — Issues 1–20. Categories, tags, descriptions, and connections are derived from the original newsletter content.
 
 ## Tech
 

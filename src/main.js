@@ -976,7 +976,9 @@ function renderPanel() {
   let y = p
 
   // Title
-  y += drawPanelText('CREATIVE AI TOOLS', PANEL_FONT_TITLE, PANEL_LH_TITLE, PANEL_COLORS.title, p, y, maxW)
+  y += drawPanelText('KNOWLEDGE GRAPH PRETEXT', PANEL_FONT_TITLE, PANEL_LH_TITLE, PANEL_COLORS.title, p, y, maxW)
+  y += 4
+  y += drawPanelText('Upload your own graph to replace this example.', PANEL_FONT_SMALL, PANEL_LH_SMALL, PANEL_COLORS.dimmed, p, y, maxW)
   y += 10
 
   // Upload buttons
@@ -995,7 +997,7 @@ function renderPanel() {
   panelCtx.strokeRect(p, y, maxW, dzH)
   panelCtx.setLineDash([])
 
-  const dzLabel = isDraggingOverPanel ? 'Drop file here' : 'Drag & drop .json .md .zip'
+  const dzLabel = isDraggingOverPanel ? 'Drop to replace graph' : 'Drag & drop .json .md .zip'
   const dzPrepared = getPanelPrepared(dzLabel, PANEL_FONT_SMALL)
   const dzLines = layoutWithLines(dzPrepared, maxW - 20, PANEL_LH_SMALL)
   panelCtx.font = PANEL_FONT_SMALL
