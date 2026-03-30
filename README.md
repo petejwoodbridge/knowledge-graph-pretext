@@ -1,5 +1,7 @@
 # Knowledge Graph Pretext
 
+https://github.com/user-attachments/assets/8025c115-009e-4c51-805e-6197cf383975
+
 An interactive, physics-based knowledge graph visualiser built with canvas rendering and [@chenglou/pretext](https://github.com/chenglou/pretext) for high-quality text layout.
 
 **Upload any `.json`, `.md`, or `.zip` file to visualise your own knowledge graph.**
