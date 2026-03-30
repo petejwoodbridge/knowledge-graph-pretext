@@ -51,6 +51,27 @@ let edges = initialData.edges
 let activeFilter = null
 let matchingNodeIds = new Set() // ids of nodes that match current filter
 
+// ── Camera Tween ──────────────────────────────────────────────────
+// Smoothly animate the camera to a target position/zoom
+let cameraTween = null // { tx, ty, tz, frames, total }
+
+function tweenCamera(tx, ty, tz, frames = 45) {
+  cameraTween = { tx, ty, tz, frames, total: frames }
+}
+
+function stepCameraTween() {
+  if (!cameraTween) return
+  const t = 1 - cameraTween.frames / cameraTween.total
+  // Ease out cubic
+  const ease = 1 - Math.pow(1 - Math.min(t + 1 / cameraTween.total, 1), 3)
+  camera.x += (cameraTween.tx - camera.x) * ease * 0.18
+  camera.y += (cameraTween.ty - camera.y) * ease * 0.18
+  camera.zoom += (cameraTween.tz - camera.zoom) * ease * 0.18
+  cameraTween.frames--
+  if (cameraTween.frames <= 0) cameraTween = null
+  needsRender = true
+}
+
 function setFilter(filter) {
   activeFilter = filter
   matchingNodeIds.clear()
@@ -62,7 +83,6 @@ function setFilter(filter) {
   if (!filter) {
     badge.classList.remove('visible')
     searchBar.classList.remove('active')
-    // Restore saved positions — let physics settle naturally
     wakeSimulation()
     needsRender = true
     needsPanelRender = true
@@ -80,6 +100,7 @@ function setFilter(filter) {
         node.category,
         ...(node.tags || []),
         ...(node.issues || []).map(i => '#' + i),
+        node.desc || '',
       ].join(' ').toLowerCase()
       if (haystack.includes(q)) matchingNodeIds.add(node.id)
     }
@@ -89,12 +110,19 @@ function setFilter(filter) {
   const color = filter.type === 'category' ? (CATEGORY_COLORS[filter.value] || '#38bdf8') : '#38bdf8'
   badge.style.background = color + '33'
   badge.style.color = color
-  badge.style.borderColor = color
+  badge.style.border = `1px solid ${color}`
   badgeLabel.textContent = filter.value
   badge.classList.add('visible')
   if (filter.type === 'search') searchBar.classList.add('active')
 
-  // Compute group target center (average of matching nodes)
+  // Tween camera to focus on world origin where cluster will gather
+  // Estimate a reasonable zoom based on number of matching nodes
+  const count = matchingNodeIds.size
+  const targetZoom = count <= 5 ? 1.2 : count <= 15 ? 0.9 : count <= 30 ? 0.7 : 0.55
+  const tx = width / 2
+  const ty = height / 2
+  tweenCamera(tx, ty, targetZoom)
+
   wakeSimulation()
   needsRender = true
   needsPanelRender = true
@@ -713,39 +741,26 @@ function stepPhysics() {
     }
   }
 
-  // Filter grouping force: matching nodes attract to group center, non-matching repel away
+  // Filter grouping force: pull matching nodes toward world origin (0,0),
+  // push non-matching away from it — so the cluster always gathers at screen centre
   if (activeFilter && matchingNodeIds.size > 0) {
-    // Compute centroid of matching nodes
-    let cx = 0, cy = 0, count = 0
+    const PULL_STRENGTH = 0.022
+    const PUSH_STRENGTH = 0.004
+
     for (const node of nodes) {
+      // Vector from node toward world origin
+      const dx = -node.x
+      const dy = -node.y
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1
+
       if (matchingNodeIds.has(node.id)) {
-        cx += node.x
-        cy += node.y
-        count++
-      }
-    }
-    if (count > 0) {
-      cx /= count
-      cy /= count
-
-      const PULL_STRENGTH = 0.015   // how hard matching nodes pull toward centroid
-      const PUSH_STRENGTH = 0.003   // how hard non-matching push away
-
-      for (const node of nodes) {
-        const dx = cx - node.x
-        const dy = cy - node.y
-        const dist = Math.sqrt(dx * dx + dy * dy) || 1
-
-        if (matchingNodeIds.has(node.id)) {
-          // Pull toward centroid (stronger when far)
-          node._fx += dx * PULL_STRENGTH
-          node._fy += dy * PULL_STRENGTH
-        } else {
-          // Push away from centroid
-          if (dist < 600) {
-            node._fx -= dx * PUSH_STRENGTH
-            node._fy -= dy * PUSH_STRENGTH
-          }
+        node._fx += dx * PULL_STRENGTH
+        node._fy += dy * PULL_STRENGTH
+      } else {
+        // Push away, but only if reasonably close — distant non-matches left alone
+        if (dist < 800) {
+          node._fx -= dx * PUSH_STRENGTH
+          node._fy -= dy * PUSH_STRENGTH
         }
       }
     }
@@ -802,6 +817,8 @@ function loop() {
     octo.frame = (octo.frame + 1) % OCTO_FRAMES_RIGHT.length
     needsRender = true
   }
+
+  if (cameraTween) stepCameraTween()
 
   if (simulationActive) {
     const still = !stepPhysics()
